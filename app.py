@@ -195,44 +195,47 @@ if fetch_button:
                     from google_sheets_writer import read_historical_data
                     import pandas as pd
                     
-                    with st.spinner("Loading historical data..."):
-                        history = read_historical_data(account_name=username)
-                        
-                    if len(history) > 0:
-                        df_hist = pd.DataFrame(history)
-                        df_hist['parsed_at'] = pd.to_datetime(df_hist['parsed_at'])
-                        df_hist = df_hist.sort_values(by="parsed_at").reset_index(drop=True)
-                        
-                        if len(df_hist) > 1:
-                            latest = df_hist.iloc[-1]
-                            previous = df_hist.iloc[-2]
+                    try:
+                        with st.spinner("Loading historical data..."):
+                            history = read_historical_data(account_name=username)
                             
-                            delta_followers = int(latest["followers"] - previous["followers"])
-                            delta_posts = int(latest["total_posts"] - previous["total_posts"])
-                            delta_er = float(latest["avg_er"] - previous["avg_er"])
+                        if len(history) > 0:
+                            df_hist = pd.DataFrame(history)
+                            df_hist['parsed_at'] = pd.to_datetime(df_hist['parsed_at'])
+                            df_hist = df_hist.sort_values(by="parsed_at").reset_index(drop=True)
                             
-                            st.subheader("Week-over-Week Growth")
-                            h_col1, h_col2, h_col3 = st.columns(3)
-                            h_col1.metric("Followers", f"{latest['followers']:,}", f"{delta_followers:,}")
-                            h_col2.metric("Total Posts", f"{latest['total_posts']:,}", f"{delta_posts:,}")
-                            h_col3.metric("Avg Engagement Rate", f"{latest['avg_er']:.2f}%", f"{delta_er:.2f}%")
-                            
-                            st.subheader("Trends")
-                            t_col1, t_col2 = st.columns(2)
-                            with t_col1:
-                                fig_f = px.line(df_hist, x="parsed_at", y="followers", markers=True, title="Followers Growth", color_discrete_sequence=['#405DE6'])
-                                st.plotly_chart(fig_f, width='stretch')
+                            if len(df_hist) > 1:
+                                latest = df_hist.iloc[-1]
+                                previous = df_hist.iloc[-2]
                                 
-                                fig_p = px.line(df_hist, x="parsed_at", y="total_posts", markers=True, title="Total Posts Over Time", color_discrete_sequence=['#F56040'])
-                                st.plotly_chart(fig_p, width='stretch')
+                                delta_followers = int(latest["followers"] - previous["followers"])
+                                delta_posts = int(latest["total_posts"] - previous["total_posts"])
+                                delta_er = float(latest["avg_er"] - previous["avg_er"])
                                 
-                            with t_col2:
-                                fig_er = px.line(df_hist, x="parsed_at", y="avg_er", markers=True, title="Avg Engagement Rate Over Time", color_discrete_sequence=['#E1306C'])
-                                st.plotly_chart(fig_er, width='stretch')
+                                st.subheader("Week-over-Week Growth")
+                                h_col1, h_col2, h_col3 = st.columns(3)
+                                h_col1.metric("Followers", f"{latest['followers']:,}", f"{delta_followers:,}")
+                                h_col2.metric("Total Posts", f"{latest['total_posts']:,}", f"{delta_posts:,}")
+                                h_col3.metric("Avg Engagement Rate", f"{latest['avg_er']:.2f}%", f"{delta_er:.2f}%")
+                                
+                                st.subheader("Trends")
+                                t_col1, t_col2 = st.columns(2)
+                                with t_col1:
+                                    fig_f = px.line(df_hist, x="parsed_at", y="followers", markers=True, title="Followers Growth", color_discrete_sequence=['#405DE6'])
+                                    st.plotly_chart(fig_f, width='stretch')
+                                    
+                                    fig_p = px.line(df_hist, x="parsed_at", y="total_posts", markers=True, title="Total Posts Over Time", color_discrete_sequence=['#F56040'])
+                                    st.plotly_chart(fig_p, width='stretch')
+                                    
+                                with t_col2:
+                                    fig_er = px.line(df_hist, x="parsed_at", y="avg_er", markers=True, title="Avg Engagement Rate Over Time", color_discrete_sequence=['#E1306C'])
+                                    st.plotly_chart(fig_er, width='stretch')
+                            else:
+                                st.info("📊 We need at least 2 weeks of data to calculate growth and trends. Check back next week after the next sync!")
                         else:
-                            st.info("📊 We need at least 2 weeks of data to calculate growth and trends. Check back next week after the next sync!")
-                    else:
-                        st.warning("⚠️ No historical data found for this hub in Google Sheets. Please sync the data first to start tracking growth over time!")
+                            st.warning("⚠️ No historical data found for this hub in Google Sheets. Please sync the data first to start tracking growth over time!")
+                    except EnvironmentError as cred_err:
+                        st.warning(f"🔑 Google Sheets not connected: {cred_err}")
                         
                     st.divider()
                     st.header("📊 Latest Post Analysis")

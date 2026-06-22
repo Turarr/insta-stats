@@ -18,9 +18,15 @@ def get_gspread_client():
         # Parse the JSON string from the environment variable
         creds_dict = json.loads(creds_json)
         creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
-    else:
+    elif os.path.exists("credentials.json"):
         # Fallback to local file if environment variable isn't set
         creds = Credentials.from_service_account_file("credentials.json", scopes=scopes)
+    else:
+        raise EnvironmentError(
+            "Google Sheets credentials not configured. "
+            "Please set the GOOGLE_CREDENTIALS_JSON secret in your Streamlit Cloud app settings "
+            "(App settings → Secrets), or provide a credentials.json file for local development."
+        )
         
     return gspread.authorize(creds)
 
