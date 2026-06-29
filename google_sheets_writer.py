@@ -149,17 +149,17 @@ def read_historical_data(spreadsheet_name="Instagram Analytics Data", account_na
             try:
                 sh = client.open(sheet_id_or_name)
             except gspread.exceptions.SpreadsheetNotFound:
-                return []
+                raise ValueError(f"Spreadsheet '{sheet_id_or_name}' not found.")
     else:
         try:
             sh = client.open(spreadsheet_name)
         except gspread.exceptions.SpreadsheetNotFound:
-            return []
+            raise ValueError(f"Spreadsheet '{spreadsheet_name}' not found.")
 
     try:
         worksheet = sh.worksheet(account_name)
     except gspread.exceptions.WorksheetNotFound:
-        return []
+        raise ValueError(f"Tab '{account_name}' not found in the spreadsheet.")
         
     all_values = worksheet.get_all_values()
     if len(all_values) <= 1:

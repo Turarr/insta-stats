@@ -236,6 +236,8 @@ if fetch_button:
                             st.warning("⚠️ No historical data found for this hub in Google Sheets. Please sync the data first to start tracking growth over time!")
                     except EnvironmentError as cred_err:
                         st.warning(f"🔑 Google Sheets not connected: {cred_err}")
+                    except ValueError as val_err:
+                        st.warning(f"⚠️ {val_err}")
                         
                     st.divider()
                     st.header("📊 Latest Post Analysis")
