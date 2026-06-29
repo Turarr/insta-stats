@@ -169,12 +169,15 @@ def read_historical_data(spreadsheet_name="Instagram Analytics Data", account_na
     for row in all_values[1:]:
         if len(row) >= 4 and str(row[0]).strip():
             try:
+                # Replace comma decimal separator (e.g. "1,7" in Russian locale) with period
+                avg_er_str = str(row[3]).replace('%', '').replace(',', '.').strip()
                 history.append({
                     "parsed_at": str(row[0]).strip(),
-                    "followers": int(str(row[1]).replace(',', '').strip() or 0),
-                    "total_posts": int(str(row[2]).replace(',', '').strip() or 0),
-                    "avg_er": float(str(row[3]).replace('%', '').strip() or 0.0)
+                    "followers": int(str(row[1]).replace(',', '').replace('.', '').strip() or 0),
+                    "total_posts": int(str(row[2]).replace(',', '').replace('.', '').strip() or 0),
+                    "avg_er": float(avg_er_str or 0.0)
                 })
-            except Exception:
-                pass
+            except Exception as parse_err:
+                import logging
+                logging.warning(f"Skipping unparseable row in history: {row} — {parse_err}")
     return history
