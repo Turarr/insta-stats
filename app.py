@@ -205,18 +205,43 @@ if fetch_button:
                             df_hist = df_hist.sort_values(by="parsed_at").reset_index(drop=True)
                             
                             if len(df_hist) > 1:
+                                period = st.selectbox(
+                                    "Comparison Period", 
+                                    ["Week-over-Week", "Month-over-Month", "Year-over-Year"],
+                                    index=0
+                                )
                                 latest = df_hist.iloc[-1]
-                                previous = df_hist.iloc[-2]
+                                latest_date = latest['parsed_at']
                                 
-                                delta_followers = int(latest["followers"] - previous["followers"])
-                                delta_posts = int(latest["total_posts"] - previous["total_posts"])
-                                delta_er = float(latest["avg_er"] - previous["avg_er"])
+                                if period == "Week-over-Week":
+                                    target_date = latest_date - pd.DateOffset(weeks=1)
+                                    tolerance_days = 5
+                                elif period == "Month-over-Month":
+                                    target_date = latest_date - pd.DateOffset(months=1)
+                                    tolerance_days = 10
+                                else:
+                                    target_date = latest_date - pd.DateOffset(years=1)
+                                    tolerance_days = 30
+                                    
+                                df_past = df_hist.copy()
+                                df_past['diff'] = (df_past['parsed_at'] - target_date).abs()
+                                df_past = df_past[df_past['diff'] <= pd.Timedelta(days=tolerance_days)]
                                 
-                                st.subheader("Week-over-Week Growth")
-                                h_col1, h_col2, h_col3 = st.columns(3)
-                                h_col1.metric("Followers", f"{latest['followers']:,}", f"{delta_followers:,}")
-                                h_col2.metric("Total Posts", f"{latest['total_posts']:,}", f"{delta_posts:,}")
-                                h_col3.metric("Avg Engagement Rate", f"{latest['avg_er']:.2f}%", f"{delta_er:.2f}%")
+                                if not df_past.empty:
+                                    previous = df_past.loc[df_past['diff'].idxmin()]
+                                    
+                                    delta_followers = int(latest["followers"] - previous["followers"])
+                                    delta_posts = int(latest["total_posts"] - previous["total_posts"])
+                                    delta_er = float(latest["avg_er"] - previous["avg_er"])
+                                    
+                                    st.subheader(f"Growth ({period})")
+                                    h_col1, h_col2, h_col3 = st.columns(3)
+                                    h_col1.metric("Followers", f"{latest['followers']:,}", f"{delta_followers:,}")
+                                    h_col2.metric("Total Posts", f"{latest['total_posts']:,}", f"{delta_posts:,}")
+                                    h_col3.metric("Avg Engagement Rate", f"{latest['avg_er']:.2f}%", f"{delta_er:.2f}%")
+                                else:
+                                    first_sync = df_hist.iloc[0]['parsed_at'].strftime('%Y-%m-%d')
+                                    st.info(f"📊 Not enough historical data for a {period} comparison yet. The oldest data available is from {first_sync}.")
                                 
                                 st.subheader("Trends")
                                 t_col1, t_col2 = st.columns(2)
